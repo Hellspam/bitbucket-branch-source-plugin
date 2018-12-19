@@ -32,10 +32,13 @@ import com.cloudbees.plugins.credentials.domains.URIRequirementBuilder;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.model.AbstractDescribableImpl;
+import hudson.model.Result;
 import hudson.security.ACL;
 import jenkins.authentication.tokens.api.AuthenticationTokens;
 import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
+
+import java.util.Map;
 
 /**
  * Represents a {@link BitbucketCloudEndpoint} or a {@link BitbucketServerEndpoint}.
@@ -56,15 +59,21 @@ public abstract class AbstractBitbucketEndpoint extends AbstractDescribableImpl<
     private final String credentialsId;
 
     /**
+     * List of mappings from Jenkins {@link hudson.model.Result} to Bitbucket states
+     */
+    private final Map<Result, BitbucketResultMapping> resultMappings;
+
+    /**
      * Constructor.
      *
      * @param manageHooks   {@code true} if and only if Jenkins is supposed to auto-manage hooks for this end-point.
      * @param credentialsId The {@link StandardCredentials#getId()} of the credentials to use for
      *                      auto-management of hooks.
      */
-    AbstractBitbucketEndpoint(boolean manageHooks, @CheckForNull String credentialsId) {
+    AbstractBitbucketEndpoint(boolean manageHooks, @CheckForNull String credentialsId, @CheckForNull Map<Result, BitbucketResultMapping> resultMappings) {
         this.manageHooks = manageHooks && StringUtils.isNotBlank(credentialsId);
         this.credentialsId = manageHooks ? credentialsId : null;
+        this.resultMappings = resultMappings == null ? BitbucketResultMapping.defaultMappings(this) : resultMappings;
     }
 
     /**
@@ -112,6 +121,14 @@ public abstract class AbstractBitbucketEndpoint extends AbstractDescribableImpl<
     @CheckForNull
     public final String getCredentialsId() {
         return credentialsId;
+    }
+
+    /**
+     * Returns the List of {@link BitbucketResultMapping} for this endpoint
+     * @return Returns the List of {@link BitbucketResultMapping} for this endpoint
+     */
+    public final Map<Result, BitbucketResultMapping> getResultMappings() {
+        return resultMappings;
     }
 
     /**

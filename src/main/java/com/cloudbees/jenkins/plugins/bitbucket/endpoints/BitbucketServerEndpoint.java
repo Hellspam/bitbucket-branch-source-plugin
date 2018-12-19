@@ -23,20 +23,24 @@
  */
 package com.cloudbees.jenkins.plugins.bitbucket.endpoints;
 
-import com.cloudbees.plugins.credentials.common.StandardCredentials;
-import com.damnhandy.uri.template.UriTemplate;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.util.FormValidation;
+import jenkins.scm.api.SCMName;
+
 import java.net.MalformedURLException;
 import java.net.URL;
+
 import javax.annotation.Nonnull;
-import jenkins.scm.api.SCMName;
+
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
+
+import com.cloudbees.plugins.credentials.common.StandardCredentials;
+import com.damnhandy.uri.template.UriTemplate;
 
 /**
  * Represents a Bitbucket Server instance.
@@ -85,7 +89,7 @@ public class BitbucketServerEndpoint extends AbstractBitbucketEndpoint {
     @DataBoundConstructor
     public BitbucketServerEndpoint(@CheckForNull String displayName, @NonNull String serverUrl, boolean manageHooks,
                                    @CheckForNull String credentialsId) {
-        super(manageHooks, credentialsId);
+        super(manageHooks, credentialsId, null);
         this.serverUrl = BitbucketEndpointConfiguration.normalizeServerUrl(serverUrl);
         this.displayName = StringUtils.isBlank(displayName)
                 ? SCMName.fromUrl(this.serverUrl, COMMON_PREFIX_HOSTNAMES)

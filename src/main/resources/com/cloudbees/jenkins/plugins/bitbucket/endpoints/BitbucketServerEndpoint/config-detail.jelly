@@ -10,4 +10,19 @@
   <f:entry title="${%Call Can Merge}" field="callCanMerge">
     <f:checkbox default="true"/>
   </f:entry>
+    <f:advanced>
+        <f:entry title="${%Result Mappings}">
+            <table width="50%">
+                <j:forEach var="entry" items="${it.resultMappings.entrySet()}">
+                    <f:entry title="${entry.key}"/>
+                    <f:entry title="${%State}" field="${entry.value.state}">
+                        <f:select/>
+                    </f:entry>
+                    <f:entry title="${%Description}" field="${entry.value.defaultDescription}">
+                        <f:textbox/>
+                    </f:entry>
+                </j:forEach>
+            </table>
+        </f:entry>
+    </f:advanced>
 </j:jelly>

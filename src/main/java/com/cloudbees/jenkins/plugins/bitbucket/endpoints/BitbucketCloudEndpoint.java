@@ -23,15 +23,18 @@
  */
 package com.cloudbees.jenkins.plugins.bitbucket.endpoints;
 
-import com.cloudbees.jenkins.plugins.bitbucket.client.BitbucketCloudApiClient;
-import com.cloudbees.plugins.credentials.common.StandardCredentials;
-import com.damnhandy.uri.template.UriTemplate;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.util.FormValidation;
+
 import java.util.List;
+
 import org.kohsuke.stapler.DataBoundConstructor;
+
+import com.cloudbees.jenkins.plugins.bitbucket.client.BitbucketCloudApiClient;
+import com.cloudbees.plugins.credentials.common.StandardCredentials;
+import com.damnhandy.uri.template.UriTemplate;
 
 /**
  * Represents <a href="https://bitbucket.org">Bitbucket Cloud</a>.
@@ -80,7 +83,7 @@ public class BitbucketCloudEndpoint extends AbstractBitbucketEndpoint {
      */
     @DataBoundConstructor
     public BitbucketCloudEndpoint(boolean enableCache, int teamCacheDuration, int repositoriesCacheDuration, boolean manageHooks, @CheckForNull String credentialsId) {
-        super(manageHooks, credentialsId);
+        super(manageHooks, credentialsId, null);
         this.enableCache = enableCache;
         this.teamCacheDuration = teamCacheDuration;
         this.repositoriesCacheDuration = repositoriesCacheDuration;

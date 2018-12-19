@@ -37,11 +37,11 @@ import hudson.model.listeners.SCMListener;
 import hudson.plugins.mercurial.MercurialSCMSource;
 import hudson.scm.SCM;
 import hudson.scm.SCMRevisionState;
+import javax.annotation.CheckForNull;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import javax.annotation.CheckForNull;
 import jenkins.model.JenkinsLocationConfiguration;
 import jenkins.plugins.git.AbstractGitSCMSource;
 import jenkins.scm.api.SCMHeadObserver;
@@ -114,6 +114,7 @@ public class BitbucketBuildStatusNotifications {
         String buildDescription = build.getDescription();
         String statusDescription;
         String state;
+
         if (Result.SUCCESS.equals(result)) {
             statusDescription = StringUtils.defaultIfBlank(buildDescription, "This commit looks good.");
             state = "SUCCESSFUL";

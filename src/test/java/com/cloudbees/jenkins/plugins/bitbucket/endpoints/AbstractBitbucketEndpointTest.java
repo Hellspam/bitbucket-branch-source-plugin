@@ -102,7 +102,7 @@ public class AbstractBitbucketEndpointTest {
     private static class Dummy extends AbstractBitbucketEndpoint {
 
         Dummy(boolean manageHooks, String credentialsId) {
-            super(manageHooks, credentialsId);
+            super(manageHooks, credentialsId, null);
         }
 
         @Override
