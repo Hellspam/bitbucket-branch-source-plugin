@@ -26,13 +26,15 @@
 package com.cloudbees.jenkins.plugins.bitbucket.filesystem;
 
 import com.cloudbees.jenkins.plugins.bitbucket.BitbucketSCMSource;
+import com.cloudbees.jenkins.plugins.bitbucket.BitbucketTagSCMHead;
 import com.cloudbees.jenkins.plugins.bitbucket.BranchSCMHead;
 import com.cloudbees.jenkins.plugins.bitbucket.PullRequestSCMHead;
 import com.cloudbees.jenkins.plugins.bitbucket.api.BitbucketApi;
 import com.cloudbees.jenkins.plugins.bitbucket.api.BitbucketApiFactory;
+import com.cloudbees.jenkins.plugins.bitbucket.api.BitbucketAuthenticator;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
+import com.cloudbees.plugins.credentials.common.StandardCredentials;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
@@ -43,6 +45,7 @@ import hudson.model.queue.Tasks;
 import hudson.scm.SCM;
 import hudson.security.ACL;
 import java.io.IOException;
+import jenkins.authentication.tokens.api.AuthenticationTokens;
 import jenkins.scm.api.SCMFile;
 import jenkins.scm.api.SCMFileSystem;
 import jenkins.scm.api.SCMHead;
@@ -62,9 +65,9 @@ public class BitbucketSCMFileSystem extends SCMFileSystem {
     }
 
     /**
+     * Return timestamp of last commit or of tag if its annotated tag.
      *
-     * @return Return timestamp of last commit or of tag if its annotated tag
-     * @throws IOException
+     * @return timestamp of last commit or of tag if its annotated tag
      */
     @Override
     public long lastModified() throws IOException {
@@ -97,21 +100,24 @@ public class BitbucketSCMFileSystem extends SCMFileSystem {
         public SCMFileSystem build(@NonNull Item owner, @NonNull SCM scm, @CheckForNull SCMRevision rev) {
             return null;
         }
-        
-        private static StandardUsernamePasswordCredentials lookupScanCredentials(@CheckForNull Item context,
-                @CheckForNull String scanCredentialsId) {
+
+        private static StandardCredentials lookupScanCredentials(@CheckForNull Item context,
+                @CheckForNull String scanCredentialsId, String serverUrl) {
             if (Util.fixEmpty(scanCredentialsId) == null) {
                 return null;
             } else {
                 return CredentialsMatchers.firstOrNull(
                         CredentialsProvider.lookupCredentials(
-                                StandardUsernamePasswordCredentials.class,
+                                StandardCredentials.class,
                                 context,
                                 context instanceof Queue.Task
                                         ? Tasks.getDefaultAuthenticationOf((Queue.Task) context)
                                         : ACL.SYSTEM
                         ),
-                        CredentialsMatchers.withId(scanCredentialsId)
+                        CredentialsMatchers.allOf(
+                                CredentialsMatchers.withId(scanCredentialsId),
+                                AuthenticationTokens.matcher(BitbucketAuthenticator.authenticationContext(serverUrl))
+                        )
                 );
             }
         }
@@ -120,15 +126,17 @@ public class BitbucketSCMFileSystem extends SCMFileSystem {
         public SCMFileSystem build(@NonNull SCMSource source, @NonNull SCMHead head, @CheckForNull SCMRevision rev)
                 throws IOException, InterruptedException {
             BitbucketSCMSource src = (BitbucketSCMSource) source;
-            
+
             String credentialsId = src.getCredentialsId();
             String owner = src.getRepoOwner();
             String repository = src.getRepository();
             String serverUrl = src.getServerUrl();
-            StandardUsernamePasswordCredentials credentials;
-            credentials = lookupScanCredentials(src.getOwner(), credentialsId);
-            
-            BitbucketApi apiClient = BitbucketApiFactory.newInstance(serverUrl, credentials, owner, repository);
+            StandardCredentials credentials;
+            credentials = lookupScanCredentials(src.getOwner(), credentialsId, serverUrl);
+
+            BitbucketAuthenticator authenticator = AuthenticationTokens.convert(BitbucketAuthenticator.authenticationContext(serverUrl), credentials);
+
+            BitbucketApi apiClient = BitbucketApiFactory.newInstance(serverUrl, authenticator, owner, repository);
             String ref;
             if (head instanceof BranchSCMHead) {
                 ref = head.getName();
@@ -138,6 +146,8 @@ public class BitbucketSCMFileSystem extends SCMFileSystem {
                     return new BitbucketSCMFileSystem(apiClient, pr.getOriginName(), rev);
                 }
                 return null; // TODO support merge revisions somehow
+            } else if (head instanceof BitbucketTagSCMHead) {
+                 ref = "tags/" + head.getName();
             } else {
                 return null;
             }
